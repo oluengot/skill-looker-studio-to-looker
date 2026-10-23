@@ -2,7 +2,8 @@
 
 Skill portable (formato **Agent Skills**: carpeta con `SKILL.md` + recursos) que guía a un agente de
 IA para migrar **cualquier** reporte de Looker Studio a Looker con resultado 1:1 (valores,
-interacción y formato). Destila el proceso completo de la migración real "Club Urgencia Interclínica" (ver `references/12_ejemplo_club_urgencia.md`).
+interacción y formato). Destila el proceso completo del desarrollo
+[`Club Urgencia Looker/`](../Club%20Urgencia%20Looker/README.md).
 
 ## Contenido
 
@@ -24,6 +25,8 @@ homologar-looker-studio-a-looker/
 │  └─ 12_ejemplo_club_urgencia.md   caso de referencia y valores validados
 ├─ templates/                       ficha de proyecto, spec de página, vista, modelo, dashboard,
 │                                   SQL pasarela, matriz de validación, banner/encabezado HTML
+├─ tools/
+│  └─ looker_deploy.py              validar y desplegar LookML por Looker SDK 4.0 (opcional)
 ├─ scripts/
 │  ├─ ls_extraer_reporte.js         extracción del reporte LS desde la consola (window.LS)
 │  └─ looker_api_helpers.js         API interna de Looker (window.LK): leer/escribir/validar/SQL
@@ -32,19 +35,24 @@ homologar-looker-studio-a-looker/
    └─ vis_navegacion.js             (referencia) barra de navegación como vis
 ```
 
+## Novedades (oct 2026)
+
+- Pregunta al inicio si usar `/equipo`, `/equipo-max` o ningún equipo.
+- Guía de la extensión `open-claude-in-chrome` para controlar tu Chrome real desde Antigravity (`references/01`).
+- `tools/looker_deploy.py` para validar y desplegar sin la UI.
+
 ## Instalación
 
 La carpeta que se instala es **`homologar-looker-studio-a-looker/`** (no esta carpeta padre).
 
 ### Claude Code
-Clona el repo y copia la carpeta del skill a tus skills personales (o a `.claude/skills/` de un proyecto):
+Ya está instalada como skill personal en `~/.claude/skills/homologar-looker-studio-a-looker/`.
+Se activa sola cuando pides migrar u homologar un Looker Studio a Looker. También puedes
+nombrarla. Para reinstalarla después de editar el skill en el repo:
 
 ```bash
-git clone https://github.com/oluengot/skill-looker-studio-to-looker.git
-cp -r skill-looker-studio-to-looker/homologar-looker-studio-a-looker ~/.claude/skills/
+cp -r "/c/Users/oluengo/Desarrollos Cloude/Skill Homologar Looker Studio/homologar-looker-studio-a-looker" ~/.claude/skills/
 ```
-
-Se activa sola cuando pides migrar/homologar un Looker Studio a Looker (o nómbrala).
 
 ### Google Antigravity 2.0
 Antigravity usa el mismo formato de skills (`SKILL.md` con `name` y `description` en el
@@ -53,7 +61,7 @@ frontmatter):
 - **Por workspace**: copia la carpeta a `<workspace>/.agent/skills/`.
 
 ```bash
-mkdir -p ~/.gemini/antigravity/skills && cp -r skill-looker-studio-to-looker/homologar-looker-studio-a-looker ~/.gemini/antigravity/skills/
+mkdir -p ~/.gemini/antigravity/skills && cp -r "/c/Users/oluengo/Desarrollos Cloude/Skill Homologar Looker Studio/homologar-looker-studio-a-looker" ~/.gemini/antigravity/skills/
 ```
 
 Después registra los MCP en `mcp_config.json` (Agent panel → MCP Servers → Manage → View raw
@@ -82,6 +90,7 @@ documentación vigente o pide al agente que lea `SKILL.md` directamente.
 - Permisos Looker: develop, see_lookml, use_sql_runner y, si el agente despliega, deploy.
 
 ## Mantenimiento del skill
-- Cuando una migración enseñe algo nuevo (trampa, endpoint, patrón), agrégalo a `references/11_trampas_y_lecciones.md` o a la referencia que corresponda, y abre un PR / commit en este repo.
+- Cuando una migración enseñe algo nuevo (una trampa, un endpoint, un patrón), agrégalo a
+  `references/11_trampas_y_lecciones.md` o a la referencia que corresponda, y reinstala la copia.
 - No pongas aquí datos sensibles: ni credenciales ni datos de pacientes. Los valores del ejemplo
   son agregados.
