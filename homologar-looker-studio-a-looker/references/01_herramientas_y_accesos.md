@@ -16,7 +16,7 @@ alternativa de la columna "Plan B".
 
 | Capacidad | Claude Code (CLI / desktop) | Google Antigravity 2.0 | Otro agente (Cursor, Codex, Gemini CLI…) | Plan B |
 |---|---|---|---|---|
-| C1 navegador | `mcp__Claude_Browser__*` (navegador integrado de la app de escritorio) o `mcp__claude-in-chrome__*` (Chrome real del usuario). Herramientas clave: `navigate`, `javascript_tool` (`javascript_exec`), `read_network_requests`, `computer` (screenshot/click), `get_page_text` | **Browser subagent** integrado de Antigravity (Chrome controlado por el agente, con su propio perfil: el usuario inicia sesión una vez ahí). Para ejecutar JS usar la acción de ejecutar script/consola del browser agent; para red, las capturas/registros del agente | MCP **Chrome DevTools** (`chrome-devtools-mcp`: `evaluate_script`, `list_network_requests`, `get_network_request`, `take_screenshot`) o **Playwright MCP** (`@playwright/mcp`: `browser_evaluate`, `browser_network_requests`) | El usuario pega los snippets de `scripts/` en la consola DevTools (F12) y devuelve el resultado |
+| C1 navegador | `mcp__Claude_Browser__*` (navegador integrado de la app de escritorio) o `mcp__claude-in-chrome__*` (Chrome real del usuario). Herramientas clave: `navigate`, `javascript_tool` (`javascript_exec`), `read_network_requests`, `computer` (screenshot/click), `get_page_text` | **Recomendado: extensión `open-claude-in-chrome-hybrid`** (MCP que controla tu Chrome real con tu sesión; ver sección propia más abajo). Alternativa: **Browser subagent** integrado de Antigravity (Chrome con perfil propio: el usuario inicia sesión una vez ahí; para JS usa la acción de script/consola del browser agent) | MCP **Chrome DevTools** (`chrome-devtools-mcp`: `evaluate_script`, `list_network_requests`, `get_network_request`, `take_screenshot`) o **Playwright MCP** (`@playwright/mcp`: `browser_evaluate`, `browser_network_requests`) | El usuario pega los snippets de `scripts/` en la consola DevTools (F12) y devuelve el resultado |
 | C2 MCP Looker | servidor `looker` (MCP Toolbox prebuilt): `mcp__looker__get_models`, `get_explores`, `get_dimensions`, `get_measures`, `query`, `query_sql`, `query_url`, `get_dashboards`, `get_dashboard`, `run_dashboard`, `make_dashboard`, `add_dashboard_element`, `add_dashboard_filter`, `update_dashboard_element`, `update_dashboard_layout_component`, `create_dashboard_layout`, `generate_embed_url`, `get_looks`, `run_look`, `make_look`, `get_field_value_suggestions` | Mismo servidor (MCP Toolbox `--prebuilt looker`) registrado en `mcp_config.json` de Antigravity (Agent panel → MCP Servers → Manage → View raw config) | Mismo servidor en la config MCP de la herramienta | API REST de Looker con `curl` + client_id/secret (leídos de variables de entorno) |
 | C3 SQL | Vía C1: `POST /api/internal/core/4.0/sql_queries` (usa la conexión de Looker, **recomendado**: valida exactamente lo que Looker verá). Alternativa: MCP Toolbox `--prebuilt bigquery` o REST BigQuery con `gcloud auth print-access-token` | Igual: vía browser agent, o MCP Toolbox `--prebuilt bigquery` | Igual | SQL Runner de Looker en la UI (el usuario pega la consulta) |
 | C4 archivos/shell | Read/Write/Edit/Bash/PowerShell | Editor + terminal integrados del agente | Nativo | — |
@@ -88,6 +88,38 @@ claves. Verifica la sintaxis exacta en la documentación vigente de Antigravity.
 `--prebuilt bigquery` usa Application Default Credentials (`gcloud auth application-default login`,
 que lo hace **el usuario**). Herramientas: `execute_sql`, `list_dataset_ids`, `list_table_ids`,
 `get_table_info`, etc.
+
+### Extensión open-claude-in-chrome (controla tu Chrome real; ideal para Antigravity)
+
+Equivale a Claude in Chrome para cualquier agente con soporte MCP. El agente maneja **tu** Chrome
+con tu sesión ya iniciada en Looker Studio y Looker (sin bloqueos de login ni de dominio, que sí
+ocurren con navegadores aislados). Arquitectura: `agente ⇄ MCP (server-hybrid.js) ⇄ native host ⇄ extensión ⇄ Chrome`.
+
+Instalación (una sola vez, repo `open-claude-in-chrome`):
+1. `npm install --prefix host` y `npm install --prefix host/codemode/worker`.
+2. Chrome → `chrome://extensions` → *Modo desarrollador* → *Cargar descomprimida* → carpeta `extension/`. Anota el ID.
+3. `./install.sh <id-de-la-extensión>` (Git Bash) registra el native messaging. Pasa varios IDs si usas varios navegadores.
+4. Cierra **todas** las ventanas de Chrome y ábrelo de nuevo.
+5. Registra el servidor en el `mcp_config.json` del agente (Antigravity: `.agents/mcp_config.json` del workspace o la config global):
+```json
+"open-claude-in-chrome-hybrid": {
+  "command": "node",
+  "args": ["<ruta>/open-claude-in-chrome/host/codemode/server-hybrid.js"]
+}
+```
+6. Reinicia el agente. En una conversación nueva prueba: *"lista mis pestañas con `tabs_context_mcp` y abre lookerstudio.google.com"*.
+
+Herramientas que usa esta skill: `tabs_context_mcp` (listar pestañas), `set_tab_focus`, `navigate`,
+`javascript_tool` (ejecutar `scripts/*.js`, API interna de LS y de Looker), `read_page` / `get_page_text`,
+`read_network_requests` (respuestas `batchedDataV2`), `computer` (capturas y clics). Son las mismas
+capacidades que C1 exige; en Claude Code el equivalente es `mcp__claude-in-chrome__*`.
+
+Para que el agente la use siempre, agrega una regla (Antigravity: `.agents/rules/looker-chrome-extension.md`,
+`trigger: always_on`) que diga: *"Para Looker Studio (`lookerstudio.google.com`) y Looker (`*.looker.com`)
+usa siempre el MCP `open-claude-in-chrome-hybrid`; no abras otro navegador"*.
+
+Si falla: MCP en rojo → falta `npm install` o la ruta de `args` es incorrecta; `tabs_context_mcp` vacío →
+no se registró el native messaging o no reiniciaste Chrome; redirige a login → inicia sesión tú en ese Chrome.
 
 ### MCP de navegador (si la plataforma no trae uno)
 - Chrome DevTools MCP: `npx -y chrome-devtools-mcp@latest` (controla un Chrome; el usuario inicia

@@ -88,3 +88,37 @@ empezar cada página.
     Necesitas una vis custom o HTML, o acordarlo como diferencia.
 40. **El mismo índice con formatos distintos** (entero en la tabla, % en la línea del gráfico) →
     dos medidas con su `value_format`.
+
+## Aprendidas en Adhesión Data Driven (2026-10-09)
+41. **Migración previa "a medias" que no cuadra**: antes de completar un trabajo existente, compara su
+    fuente con la de LS. En Data Driven la adhesión salía de otra tabla (`tasa_semanal` diaria) en vez de
+    `t_kpi_mensual_lideres.tasa_pct` → vista nueva, no "arreglar" la medida vieja.
+42. **`orden_inicial: total desc` en un pivote con 2 medidas** ordena por la *última* columna de totales
+    (p. ej. `#`), no por la tasa → usa la clave exacta `vista.medida|total desc`.
+43. **Rango de fechas sin default guardado**: `getReport` no trae `dateDuration` del control; si el menú
+    ⋮ del visor no ofrece "Restablecer", lo que muestra LS es el default real. Repícalo tal cual.
+44. **MCP `run_dashboard` ignora los filtros por defecto** del dashboard (salieron meses fuera del rango)
+    → valida producción con `query` aplicando los mismos filtros.
+45. **`queries/run/json` con `total: true`** agrega la fila de totales como una fila más con la
+    dimensión en `null`; no es un dato raro.
+46. **Tabla solo de dimensiones** en LS agrupa (filas distintas): 31.865 filas crudas → 28.149 visibles.
+    Looker hace lo mismo con `GROUP BY`.
+
+## Aprendidas en la revisión de usuario de Club Urgencia (2026-10-19)
+47. **El origen se amplía y LS cambia sus fórmulas después de la migración**: INF_tPAGOS pasó de
+    traer solo urgencia a traer todos los pilares, y el diseñador cambió en LS el acotamiento de
+    `ZONA='U'` a un filtro de gráfico `PILAR='URGENCIAS'` y "Atenciones" de
+    `COUNT_DISTINCT(clínica+cargo_caja)` a `SUM(ACTIVIDAD)`. Ante una observación del usuario de
+    "valores distintos", **vuelve a extraer la definición viva de LS** (getReport +
+    getBlockDatasource) antes de suponer un error de Looker; reproduce primero el valor de LS por
+    SQL y recién después edita LookML.
+48. **Comparar con el mismo rango**: el control de fecha de LS puede no tener default (muestra todo
+    el histórico) o tener otro ("este mes") distinto del de Looker. Si solo las métricas "Otros" no
+    cuadran y las "Club" sí, sospecha del rango (los datos previos al lanzamiento solo afectan Otros).
+49. **Escribir en el IDE**: los endpoints `/api/internal/projects/<P>/files` usan el workspace del
+    *Modo de desarrollo de la UI*, no el de `PATCH session`. Si el PUT da 404 o `can.edit=false`,
+    activa "Modo de desarrollo" en el menú principal y recarga.
+50. **No tipear a ciegas en el IDE**: `type` con el foco perdido escribe dentro del editor Ace (su
+    textarea oculto). Para el diálogo de commit, asigna el valor al `input` del `[role=dialog]` y
+    dispara `input`/`change`; si algo cayó en el editor, deshaz con `ace.edit(...).undo()` y compara
+    contra el archivo del servidor antes de commitear.

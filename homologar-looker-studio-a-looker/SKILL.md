@@ -75,6 +75,8 @@ cada fase está en `references/`.
 ### Fase 0. Preparación y accesos → `references/01_herramientas_y_accesos.md`
 - Verifica que tienes: navegador controlable con sesión en LS y en Looker, MCP de Looker (API key
   propia) y forma de ejecutar SQL (conexión de Looker vía `sql_queries`, MCP de BigQuery o REST).
+- **Pregunta al usuario qué equipo usar**: `/equipo` (costo-eficiente), `/equipo-max` (máxima calidad) o sin equipo (ver sección "Equipo de agentes").
+- Navegador: en Antigravity y otros agentes sin navegador propio, instala la extensión `open-claude-in-chrome` (ver `references/01_herramientas_y_accesos.md`); en Claude Code usa `mcp__claude-in-chrome__*`.
 - Llena la ficha del proyecto. Crea la carpeta de trabajo local (`<Nombre>/` con `README.md`).
 - **Puerta:** `get_models` del MCP responde. La pestaña de Looker tiene `meta[name=csrf-token]`.
   La pestaña de LS (modo edición) responde `getReport`.
@@ -190,6 +192,50 @@ cada fase está en `references/`.
 - Si cambias el `label` de una medida usada en gráficos, fija `series_labels` en esos mosaicos para
   que la leyenda no cambie.
 
+## Equipo de agentes: preguntar al usuario antes de empezar
+
+**Al iniciar la fase 0, pregunta SIEMPRE una vez** (Claude Code: `AskUserQuestion`; Antigravity: `ask_question`)
+cómo quiere trabajar, explicando la diferencia en una línea cada opción:
+
+| Opción | Cuándo conviene |
+|---|---|
+| **`/equipo`** (costo-eficiente) | Migraciones normales o de muchas páginas parecidas; el modelo caro solo planifica y revisa, el barato construye |
+| **`/equipo-max`** (máxima calidad, sin importar costo) | Reportes críticos, fórmulas complejas, valores que deben cuadrar sí o sí, o cuando ya hubo errores en una pasada anterior |
+| **Sin equipo** (el agente principal hace todo) | Ajustes chicos sobre una migración ya hecha (mantenimiento de 1–2 archivos) |
+
+No elijas por tu cuenta ni asumas la respuesta anterior: pregunta en cada migración. Una vez elegido,
+sigue el protocolo de esa skill (plan en `.equipo/<slug>/`). Si el comando no está instalado, indícalo y
+ofrece instalarlo desde su repo (ver tabla) antes de seguir.
+
+Una migración de varias páginas se reparte bien entre agentes: una **página de LS = una tarea**
+(spec → vistas/medidas → dashboard → validación), y las tareas de páginas distintas no comparten archivos.
+Los archivos comunes (modelo, banner de navegación, ficha) van a una tarea de integración al final.
+
+| Plataforma | Costo-eficiente | Máxima calidad (sin importar costo) |
+|---|---|---|
+| Claude Code | `/equipo` (jefe Opus, constructores Haiku, supervisor Sonnet) o `/dividir` | `/equipo-max` (todo Opus: `jefe`, constructores y `revisor`) |
+| Antigravity | `/equipo` (jefe Pro, constructores Flash) | `/equipo-max` (todos Pro: `jefe-max`, `constructor-max`, `revisor-max`) |
+
+Plantillas: repos `oluengot/equipo-agentes-claude`, `oluengot/equipo-agentes-antigravity` y
+`oluengot/equipo-agentes-antigravity-max`. Reglas: el jefe planifica con la ficha del proyecto como pedido; los
+constructores nunca autorizan por sí mismos acciones de la sección "Reglas de oro" (crear vistas en BigQuery,
+commit y deploy requieren OK del usuario); el revisor repite la validación numérica de la fase 3/7 en vez de
+confiar en el reporte del constructor.
+
+### Automatización de despliegue: `tools/looker_deploy.py` (Looker SDK 4.0, opcional)
+
+Valida el LookML y despliega a producción sin entrar a la UI web.
+
+```bash
+python tools/looker_deploy.py status   --project BI   # conexión, usuario, ramas, sync con producción
+python tools/looker_deploy.py validate --project BI   # errores de compilación antes del deploy
+python tools/looker_deploy.py deploy   --project BI   # valida y ejecuta deploy_to_production
+python tools/looker_deploy.py reset    --project BI --to-production
+```
+Requisitos: `pip install looker-sdk` y un `looker.ini` fuera del repo (`Credenciales/looker.ini` junto al
+proyecto o la variable `LOOKERSDK_INI`). Nunca versionar el `looker.ini`. El deploy sigue exigiendo la
+autorización explícita del usuario (fase 8).
+
 ## Mapa de archivos del skill
 
 | Archivo | Para qué |
@@ -211,5 +257,6 @@ cada fase está en `references/`.
 | `scripts/looker_api_helpers.js` | Helpers de la API interna de Looker (archivos, validate, SQL, queries, git) |
 | `assets/vis_tabla_custom.js` | Visualización custom de tabla/KPI/drill down (reutilizable, cambiar id/label) |
 | `assets/vis_navegacion.js` | Barra de navegación como vis (solo referencia; se prefirió banner de texto) |
+| `tools/looker_deploy.py` | Validar y desplegar LookML por Looker SDK 4.0 (opcional) |
 
 Lee las referencias **a medida que entras a cada fase**, no todas de una vez.
