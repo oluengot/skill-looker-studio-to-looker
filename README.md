@@ -5,6 +5,9 @@ IA para migrar **cualquier** reporte de Looker Studio a Looker con resultado 1:1
 interacción y formato). Destila el proceso completo del desarrollo
 [`Club Urgencia Looker/`](../Club%20Urgencia%20Looker/README.md).
 
+> **V2:** la carpeta `homologar-looker-studio-a-looker-V2/` es la versión corregida (despliegue por git + API, lecciones 51-54). 
+> `homologar-looker-studio-a-looker/` se mantiene igual para comparar.
+
 ## Contenido
 
 ```
