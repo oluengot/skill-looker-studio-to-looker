@@ -26,7 +26,32 @@
 3. **Dev probado**: los dashboards cambiados renderizan bien en dev y la validación V2 está
    hecha.
 
-## Commit + deploy por la UI del IDE
+## Camino por defecto: `tools/looker_deploy.py` (git + API pública)
+
+Reemplaza a la UI del IDE. Causas que elimina: sesión expirada (401), foco perdido en el editor Ace,
+errores de otros equipos en el dev compartido y el bucle "Pull & Merge".
+
+1. **Una vez por PC:** `python tools/looker_deploy.py doctor --deep`. Comprueba credenciales, permisos
+   `develop`+`deploy`, acceso git al repo del proyecto y el circuito completo con una rama temporal
+   (no toca producción). Si falla, dice qué falta; no sigas con `ship` hasta que pase.
+2. **Ver qué cambiaría:** `plan --map "<carpeta lookml local>=<carpeta en el repo>" [--file "<manifest>=manifest.lkml"]`.
+   Lista altas/modificados/borrados y marca los archivos que **otro cambió en el remoto después de tu
+   último deploy** (no los pisa sin `--force-overwrite`). Antes corre `lint` con las trampas conocidas
+   (`label_short`, `/` inicial en el manifest, `.file.lkml`, tabs/YAML inválido, `NOT NULL`).
+3. **Desplegar** (con la autorización del usuario): `ship --map ... -m "mensaje" --yes`. Internamente:
+   fetch → rama desde `origin/<prod>` → copia + commit → push de rama temporal → crea la rama en el dev de
+   la API → `validate` → `deploy_to_production` (sobre la rama temporal) → verifica `remote_ref`/`ref` de producción → borra la
+   rama temporal. Si producción avanzó en el medio, rehace todo sobre la nueva base (hasta `--retries`, 4).
+4. **Validación:** errores en archivos del deploy → se detiene. Errores en archivos ajenos → se detiene y se
+   reportan; solo con OK del usuario se repite con `--ignore-foreign-errors`.
+5. **Rollback:** `rollback --commit <sha> --yes` (commit de reversa + deploy, nunca reescribe historia).
+6. `--delete-missing` borra del repo lo que ya no existe en la carpeta local (solo dentro de cada `--map`).
+
+Credenciales: variables de entorno del MCP; git por Git Credential Manager o `LOOKER_GIT_TOKEN`. El commit
+sale con la identidad del dueño de la API key (o `LOOKER_GIT_NAME`/`LOOKER_GIT_EMAIL`). Log y estado en
+`~/.looker_deploy/<proyecto>/`. Tras el deploy sigue valiendo la verificación post-deploy de abajo (MCP/query).
+
+## Plan B: commit + deploy por la UI del IDE
 
 En `https://<instancia>/projects/<P>/files/<algún archivo>`, con el modo desarrollo activo, el
 botón Git del IDE (arriba a la derecha) cambia de estado:
