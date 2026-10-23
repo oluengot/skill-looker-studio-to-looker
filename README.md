@@ -26,7 +26,7 @@ homologar-looker-studio-a-looker/
 ├─ templates/                       ficha de proyecto, spec de página, vista, modelo, dashboard,
 │                                   SQL pasarela, matriz de validación, banner/encabezado HTML
 ├─ tools/
-│  └─ looker_deploy.py              validar y desplegar LookML por Looker SDK 4.0 (opcional)
+│  └─ looker_deploy.py              aplicar y desplegar LookML por git + API pública (doctor/plan/ship/rollback)
 ├─ scripts/
 │  ├─ ls_extraer_reporte.js         extracción del reporte LS desde la consola (window.LS)
 │  └─ looker_api_helpers.js         API interna de Looker (window.LK): leer/escribir/validar/SQL
@@ -39,7 +39,7 @@ homologar-looker-studio-a-looker/
 
 - Pregunta al inicio si usar `/equipo`, `/equipo-max` o ningún equipo.
 - Guía de la extensión `open-claude-in-chrome` para controlar tu Chrome real desde Antigravity (`references/01`).
-- `tools/looker_deploy.py` para validar y desplegar sin la UI.
+- `tools/looker_deploy.py` para aplicar y desplegar sin la UI (primero `doctor --deep`).
 
 ## Instalación
 
