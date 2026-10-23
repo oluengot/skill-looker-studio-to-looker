@@ -21,7 +21,7 @@ homologar-looker-studio-a-looker/
 │  ├─ 08_dashboards_lookml.md       anatomía .dashboard.lookml, filtros, grilla, banner, gráficos
 │  ├─ 09_deploy.md                  commit/deploy/Pull & Merge/verificación/rollback
 │  ├─ 10_checklists.md              checklists por fase, QA y entregables
-│  ├─ 11_trampas_y_lecciones.md     40 trampas reales con solución
+│  ├─ 11_trampas_y_lecciones.md     54 trampas reales con solución
 │  └─ 12_ejemplo_club_urgencia.md   caso de referencia y valores validados
 ├─ templates/                       ficha de proyecto, spec de página, vista, modelo, dashboard,
 │                                   SQL pasarela, matriz de validación, banner/encabezado HTML
@@ -39,7 +39,12 @@ homologar-looker-studio-a-looker/
 
 - Pregunta al inicio si usar `/equipo`, `/equipo-max` o ningún equipo.
 - Guía de la extensión `open-claude-in-chrome` para controlar tu Chrome real desde Antigravity (`references/01`).
-- `tools/looker_deploy.py` para aplicar y desplegar sin la UI (primero `doctor --deep`).
+- **Despliegue definitivo** (`tools/looker_deploy.py`, verificado en vivo): aplica archivos LookML y los lleva a producción por
+  git + API pública con API key, sin UI ni cookies. Parte siempre de `origin/<producción>` (adiós "Pull & Merge"), valida
+  separando errores propios de ajenos, despliega con `deploy_to_production`, verifica el commit y reintenta si producción avanza.
+  Protege el `manifest.lkml` compartido y no pisa cambios ajenos. Comandos: `doctor --deep`, `plan`, `ship ... --yes`, `rollback`.
+  Se usa así: `python tools/looker_deploy.py doctor --deep` (una vez por PC) y luego `plan` / `ship`. Detalle en `references/09_deploy.md`.
+- Lecciones 51-54 (deploy por UI frágil, la API pública no escribe archivos, manifest compartido, `deploy_ref_to_production` da 404).
 
 ## Instalación
 
@@ -88,6 +93,7 @@ documentación vigente o pide al agente que lea `SKILL.md` directamente.
 - Acceso de lectura a las tablas BigQuery origen. Crear vistas en el dataset destino requiere OK
   del usuario.
 - Permisos Looker: develop, see_lookml, use_sql_runner y, si el agente despliega, deploy.
+- Para `looker_deploy.py`: Python 3.9+, git, `LOOKER_BASE_URL`/`LOOKER_CLIENT_ID`/`LOOKER_CLIENT_SECRET` y acceso de escritura al repo git del proyecto (Git Credential Manager o `LOOKER_GIT_TOKEN`). Sin `pip install`.
 
 ## Mantenimiento del skill
 - Cuando una migración enseñe algo nuevo (una trampa, un endpoint, un patrón), agrégalo a
